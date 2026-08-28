@@ -1,0 +1,35 @@
+MODULE main
+VAR
+  Closed : boolean;
+  Heat : boolean;
+  Error : boolean;
+  state : {s1, s2, s3, s4, s5};
+  
+INVAR
+  ((state = s1) -> (Closed=FALSE & Heat=FALSE & Error=FALSE))  &
+  ((state = s2) -> (Closed=FALSE & Heat=FALSE & Error=TRUE))  &
+  ((state = s3) -> (Closed=TRUE & Heat=FALSE & Error=TRUE))   &
+  ((state = s4) -> (Closed=TRUE & Heat=FALSE & Error=FALSE)) &
+  ((state = s5) -> (Closed=TRUE & Heat=TRUE & Error=FALSE))  
+  
+ASSIGN
+  init(state) := {s1};
+  next(state) := case
+    state = s1 : {s2, s4};
+    state = s2 : s3;
+    state = s3 : {s2, s4};
+    state = s4 : {s1, s5};
+    state = s5 : {s1, s4};
+  esac;
+  
+LTLSPEC G (Heat -> Closed)
+
+LTLSPEC X (Error | Closed)
+
+LTLSPEC Error U !Heat
+
+LTLSPEC G F (Heat | Error)
+
+LTLSPEC (G !Error) -> G F Closed
+
+LTLSPEC G (Heat -> F !Heat)

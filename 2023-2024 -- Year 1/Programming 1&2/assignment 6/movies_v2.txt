@@ -1,0 +1,227 @@
+Sing 2,7.4,110,2021,Animation Adventure Comedy,162790990
+The Northman,7.2,137,2022,Action Adventure Drama,162790990
+Fantastic Beasts: The Secrets of Dumbledore,6.2,142,2022,Action Adventure Fantasy,162790990
+No Time to Die,7.3,163,2021,Action Adventure Thriller,160869031
+Interceptor,4.5,99,2022,Action Adventure Drama,160869031
+Jurassic Park,8.2,127,1993,Action Adventure Sci-Fi,402453882
+Spider-Man: No Way Home,8.3,148,2021,Action Adventure Fantasy,804747988
+The Bad Guys,6.9,100,2022,Animation Adventure Comedy,652270625
+Dune,8.0,155,2021,Action Adventure Drama,108327830
+Star Wars,8.6,121,1977,Action Adventure Fantasy,322740140
+Chip 'n Dale: Rescue Rangers,7.0,97,2022,Animation Adventure Comedy,322740140
+Eternals,6.3,156,2021,Action Adventure Fantasy,164870234
+Star Wars: Episode I - The Phantom Menace,6.5,136,1999,Action Adventure Fantasy,474544677
+Avengers: Endgame,8.4,181,2019,Action Adventure Drama,858373000
+Doctor Strange,7.5,115,2016,Action Adventure Fantasy,232641920
+Star Wars: Episode III - Revenge of the Sith,7.6,140,2005,Action Adventure Fantasy,380262555
+Free Guy,7.1,115,2021,Action Adventure Comedy,121626598
+Mission: Impossible,7.1,110,1996,Action Adventure Thriller,180981856
+Interstellar,8.6,169,2014,Adventure Drama Sci-Fi,188020017
+Jaws,8.1,124,1975,Adventure Thriller,260000000
+Harry Potter and the Sorcerer's Stone,7.6,152,2001,Adventure Family Fantasy,317575550
+Pirates of the Caribbean: The Curse of the Black Pearl,8.1,143,2003,Action Adventure Fantasy,305413918
+Inception,8.8,148,2010,Action Adventure Sci-Fi,292576195
+The Lost World: Jurassic Park,6.5,129,1997,Action Adventure Sci-Fi,229086679
+The Adam Project,6.7,106,2022,Action Adventure Comedy,229086679
+Back to the Future,8.5,116,1985,Adventure Comedy Sci-Fi,210609762
+Star Wars: The Rise Of Skywalker,6.5,141,2019,Action Adventure Fantasy,515202542
+Turning Red,7.0,100,2022,Animation Adventure Comedy,515202542
+Fantastic Beasts: The Crimes of Grindelwald,6.5,134,2018,Adventure Family Fantasy,159555901
+Forbidden Planet,7.5,98,1956,Adventure Sci-Fi,3000000
+Moonfall,5.2,130,2022,Action Adventure Sci-Fi,3000000
+Avatar,7.8,162,2009,Action Adventure Fantasy,760507625
+The Goonies,7.7,114,1985,Adventure Comedy Family,61503218
+Thor: Ragnarok,7.9,130,2017,Action Adventure Comedy,315058289
+Star Wars: Episode II - Attack of the Clones,6.6,142,2002,Action Adventure Fantasy,310675583
+The Suicide Squad,7.2,132,2021,Action Adventure Comedy,310675583
+Idiocracy,6.5,84,2006,Adventure Comedy Sci-Fi,438653
+Captain Marvel,6.8,123,2019,Action Adventure Sci-Fi,426829839
+Toy Story,8.3,81,1995,Animation Adventure Comedy,191796233
+Jurassic Park III,5.9,92,2001,Action Adventure Sci-Fi,181171875
+Rogue One: A Star Wars Story,7.8,133,2016,Action Adventure Sci-Fi,532177324
+Inglourious Basterds,8.3,153,2009,Adventure Drama War,120540719
+The Grand Budapest Hotel,8.1,99,2014,Adventure Comedy Crime,59100318
+The Lord of the Rings: The Fellowship of the Ring,8.8,178,2001,Action Adventure Drama,315544750
+Star Wars: Episode VI - Return of the Jedi,8.3,131,1983,Action Adventure Fantasy,309125409
+Suicide Squad,5.9,123,2016,Action Adventure Fantasy,325100054
+Shang-Chi and the Legend of the Ten Rings,7.4,132,2021,Action Adventure Fantasy,224543292
+Spider-Man,7.4,121,2002,Action Adventure Sci-Fi,403706375
+Avengers: Infinity War,8.4,149,2018,Action Adventure Sci-Fi,678815482
+Toy Story 4,7.7,100,2019,Animation Adventure Comedy,434038008
+Jumanji: The Next Level,6.7,123,2019,Action Adventure Comedy,316831246
+Venom: Let There Be Carnage,5.9,97,2021,Action Adventure Sci-Fi,213550366
+Tenet,7.3,150,2020,Action Adventure Sci-Fi,58456624
+Fantastic Beasts and Where to Find Them,7.2,132,2016,Adventure Family Fantasy,234037575
+Mad Max: Fury Road,8.1,120,2015,Action Adventure Sci-Fi,154058340
+Mission: Impossible - Fallout,7.7,147,2018,Action Adventure Thriller,220159104
+Guardians of the Galaxy,8.0,121,2014,Action Adventure Comedy,333176600
+The Bob's Burgers Movie,7.4,102,2022,Animation Adventure Comedy,333176600
+Star Wars: Episode V - The Empire Strikes Back,8.7,124,1980,Action Adventure Fantasy,290475067
+Centaur,5.3,89,2022,Action Adventure Crime,290475067
+The Hunger Games,7.2,142,2012,Action Adventure Sci-Fi,408010692
+The Blue Lagoon,5.8,104,1980,Adventure Drama Romance,58853106
+Spider-Man: Homecoming,7.4,133,2017,Action Adventure Sci-Fi,334201140
+Black Widow,6.7,134,2021,Action Adventure Sci-Fi,183651655
+Aquaman,6.8,143,2018,Action Adventure Fantasy,335061807
+Enola Holmes,6.6,123,2020,Action Adventure Crime,335061807
+The Amazing Spider-Man,6.9,136,2012,Action Adventure Sci-Fi,262030663
+Sonic the Hedgehog,6.5,99,2020,Action Adventure Comedy,148974665
+Pirates of the Caribbean: Dead Men Tell No Tales,6.5,129,2017,Action Adventure Fantasy,172558876
+Mission: Impossible - Ghost Protocol,7.4,132,2011,Action Adventure Thriller,209397903
+The Fifth Element,7.6,126,1997,Action Adventure Sci-Fi,63540020
+Deadpool,8.0,108,2016,Action Adventure Comedy,363070709
+The Rock,7.4,136,1996,Action Adventure Thriller,134069511
+Charlie's Angels,4.9,118,2019,Action Adventure Comedy,134069511
+National Lampoon's Vacation,7.3,98,1983,Adventure Comedy,61400000
+The Peanut Butter Falcon,7.6,97,2019,Adventure Comedy Drama,13122642
+X-Men: Apocalypse,6.9,144,2016,Action Adventure Sci-Fi,155442489
+Superman,7.4,143,1978,Action Adventure Sci-Fi,134218018
+Iron Man Three,7.1,130,2013,Action Adventure Sci-Fi,409013994
+The Mummy,5.4,110,2017,Action Adventure Fantasy,80101125
+Harry Potter and the Half-Blood Prince,7.6,153,2009,Action Adventure Family,301959197
+Hotel Transylvania: Transformania,6.0,87,2022,Animation Adventure Comedy,301959197
+X-Men: The Last Stand,6.6,104,2006,Action Adventure Sci-Fi,234362462
+Back to the Future Part III,7.4,118,1990,Adventure Comedy Sci-Fi,87727583
+Finch,6.8,115,2021,Adventure Drama Sci-Fi,87727583
+The Magnificent Seven,6.8,132,2016,Action Adventure Western,93432655
+First Blood,7.7,93,1982,Action Adventure Thriller,47212904
+The Parent Trap,6.6,128,1998,Adventure Comedy Drama,66308518
+Hellboy,5.2,120,2019,Action Adventure Fantasy,21903748
+Jumanji,7.0,104,1995,Adventure Comedy Family,100475249
+Fear and Loathing in Las Vegas,7.5,118,1998,Adventure Comedy Drama,10680275
+Warcraft,6.7,123,2016,Action Adventure Fantasy,47365290
+King Arthur: Legend of the Sword,6.7,126,2017,Action Adventure Drama,39175066
+X: First Class,7.7,131,2011,Action Adventure Sci-Fi,146408305
+Aladdin,8.0,90,1992,Animation Adventure Comedy,217350219
+Incredibles 2,7.6,118,2018,Animation Action Adventure,608581744
+Ant-Man,7.3,117,2015,Action Adventure Comedy,180202163
+The Hitchhiker's Guide to the Galaxy,6.7,109,2005,Adventure Comedy Sci-Fi,51085416
+Star Trek Beyond,7.0,122,2016,Action Adventure Sci-Fi,158848340
+How to Train Your Dragon,8.1,98,2010,Animation Action Adventure,217581231
+Mulan,5.7,115,2020,Action Adventure Drama,217581231
+Bill & Ted Face the Music,5.9,91,2020,Adventure Comedy Music,217581231
+Paddington,7.2,95,2014,Adventure Comedy Family,76271832
+Kung Fu Panda,7.6,92,2008,Animation Action Adventure,215434591
+Dances with Wolves,8.0,181,1990,Adventure Drama Western,184208848
+Percy Jackson & the Olympians: The Lightning Thief,5.8,118,2010,Adventure Family Fantasy,88761720
+The Divergent Series: Insurgent,6.2,119,2015,Action Adventure Sci-Fi,130179072
+Planet of the Apes,5.7,119,2001,Action Adventure Sci-Fi,180011740
+The Perfect Storm,6.4,130,2000,Action Adventure Drama,182618434
+Dragonball Evolution,2.6,85,2009,Action Adventure Fantasy,9353573
+Deliverance,7.7,109,1972,Adventure Drama Thriller,7056013
+Tangled,7.7,100,2010,Animation Adventure Comedy,200821936
+Mulan,7.6,88,1998,Animation Adventure Comedy,120620254
+Shazam!,7.0,132,2019,Action Adventure Comedy,140371656
+Big Hero 6,7.8,102,2014,Animation Action Adventure,222527828
+Robin Hood: Prince of Thieves,6.9,143,1991,Action Adventure Drama,165500000
+Belle,7.2,121,2021,Animation Adventure Drama,50072235
+Star Trek Into Darkness,7.7,132,2013,Action Adventure Sci-Fi,228778661
+The Rocketeer,6.5,108,1991,Action Adventure Family,46704056
+Sucker Punch,6.0,110,2011,Action Adventure Fantasy,36392502
+Men in Black 3,6.8,106,2012,Action Adventure Comedy,179020854
+The King's Daughter,5.1,90,2022,Action Adventure Family,179020854
+Sherlock Holmes,7.6,128,2009,Action Adventure Mystery,209028679
+Deep Blue Sea,5.9,105,1999,Action Adventure Sci-Fi,73648142
+Brave,7.1,93,2012,Animation Adventure Comedy,237283207
+The Mummy Returns,6.4,130,2001,Action Adventure Fantasy,202019785
+Frozen II,6.8,103,2019,Animation Adventure Comedy,477373578
+Holes,7.0,117,2003,Adventure Comedy Drama,67406573
+The Secret Life of Walter Mitty,7.3,114,2013,Adventure Comedy Drama,58236838
+Hunt for the Wilderpeople,7.8,101,2016,Adventure Comedy Drama,5202582
+Rango,7.2,107,2011,Animation Action Adventure,123477607
+Miss Peregrine's Home for Peculiar Children,6.7,127,2016,Adventure Drama Family,87242834
+Hugo,7.5,126,2011,Adventure Drama Family,73864507
+Maleficent,6.9,97,2014,Adventure Family Fantasy,241410378
+Riddick,6.4,119,2013,Action Adventure Sci-Fi,42025135
+Blood Diamond,8.0,143,2006,Adventure Drama Thriller,57366262
+Green Lantern,5.5,114,2011,Action Adventure Sci-Fi,116601172
+Enchanted,7.1,107,2007,Animation Adventure Comedy,127807262
+The Chronicles of Riddick,6.6,119,2004,Action Adventure Sci-Fi,57761012
+Miami Vice,6.0,132,2006,Action Adventure Crime,63450470
+"Crouching Tiger, Hidden Dragon",7.9,120,2000,Action Adventure Drama,128078872
+Godzilla: King of the Monsters,6.0,132,2019,Action Adventure Fantasy,110500138
+From Russia with Love,7.4,115,1963,Action Adventure Thriller,24796765
+The Last Airbender,4.0,103,2010,Action Adventure Family,131564731
+Atlantis: The Lost Empire,6.9,95,2001,Animation Action Adventure,84052762
+Monty Python and the Holy Grail,8.2,91,1975,Adventure Comedy Fantasy,1229197
+The Legend of Tarzan,6.2,110,2016,Action Adventure Drama,126643061
+Gods of Egypt,5.4,127,2016,Action Adventure Fantasy,31153464
+Black Crab,5.6,114,2022,Action Adventure Drama,31153464
+Tomorrow Never Dies,6.5,119,1997,Action Adventure Thriller,125332007
+Night at the Museum,6.4,108,2006,Adventure Comedy Family,250863268
+Fantastic Mr. Fox,7.9,87,2009,Animation Adventure Comedy,21002919
+Triple Frontier,6.4,125,2019,Action Adventure Crime,21002919
+The Marksman,5.6,108,2021,Adventure Drama Thriller,21002919
+X-Men: Dark Phoenix,5.7,113,2019,Action Adventure Sci-Fi,65845974
+Despicable Me 3,6.2,89,2017,Animation Adventure Comedy,264624300
+The Count of Monte Cristo,7.7,131,2002,Action Adventure Drama,54234062
+Kong: Skull Island,6.6,118,2017,Action Adventure Fantasy,168052812
+Van Helsing,6.0,131,2004,Action Adventure Fantasy,120177084
+Furious 6,7.0,130,2013,Action Adventure Crime,238679850
+Madagascar,6.9,86,2005,Animation Adventure Comedy,193595521
+Valerian and the City of a Thousand Planets,6.4,136,2017,Action Adventure Fantasy,41189488
+The Book of Eli,6.8,118,2010,Action Adventure Drama,94835059
+Austin Powers: International Man of Mystery,7.0,89,1997,Adventure Comedy,53883989
+Romancing the Stone,6.9,106,1984,Action Adventure Comedy,76572238
+Hotel Transylvania,7.0,91,2012,Animation Adventure Comedy,148313048
+Cars 2,6.2,106,2011,Animation Adventure Comedy,191452396
+Maverick,7.0,127,1994,Action Adventure Comedy,101631272
+National Treasure,6.9,131,2004,Action Adventure Mystery,173008894
+John Carter,6.6,132,2012,Action Adventure Sci-Fi,73078100
+Goldfinger,7.7,110,1964,Action Adventure Thriller,51081062
+The Lost City of Z,6.6,141,2016,Adventure Biography Drama,8580410
+Virgin Territory,4.7,97,2007,Adventure Comedy History,58884188
+"Honey, I Shrunk the Kids",6.4,93,1989,Adventure Comedy Family,130724172
+Cars 3,6.7,102,2017,Animation Adventure Comedy,152901115
+The Day After Tomorrow,6.4,124,2004,Action Adventure Sci-Fi,186740799
+Independence Day: Resurgence,5.2,120,2016,Action Adventure Sci-Fi,103144286
+Stargate,7.0,116,1994,Action Adventure Sci-Fi,71565669
+San Andreas,6.0,114,2015,Action Adventure Thriller,155190832
+The Great Train Robbery,6.9,110,1978,Adventure Crime Drama,13027857
+Snow White and the Huntsman,6.1,127,2012,Action Adventure Drama,155332381
+Fast & Furious Presents: Hobbs & Shaw,6.5,137,2019,Action Adventure Thriller,173956935
+Hellboy,6.8,122,2004,Action Adventure Fantasy,59623958
+Allegiant,5.6,120,2016,Action Adventure Mystery,66184051
+Ant-Man and the Wasp,7.0,118,2018,Action Adventure Comedy,216648740
+Lawrence of Arabia,8.3,218,1962,Adventure Biography Drama,44824144
+Thelma & Louise,7.5,130,1991,Adventure Crime Drama,45361000
+Men in Black II,6.1,88,2002,Action Adventure Comedy,190418803
+Shrek 2,7.3,93,2004,Animation Adventure Comedy,436471036
+The Twilight Saga: Eclipse,5.0,124,2010,Action Adventure Drama,300531751
+The Jungle Book,7.4,106,2016,Adventure Drama Family,364001123
+Princess Mononoke,8.4,134,1997,Animation Adventure Fantasy,2375308
+In the Heart of the Sea,6.9,122,2015,Action Adventure Biography,25020758
+Thunderball,6.9,130,1965,Action Adventure Thriller,63600000
+Alien vs. Predator,5.6,101,2004,Action Adventure Horror,80282231
+Exodus: Gods and Kings,6.0,150,2014,Action Adventure Drama,65014513
+Big Trouble in Little China,7.2,99,1986,Action Adventure Comedy,11100000
+Licence to Kill,6.6,133,1989,Action Adventure Thriller,34667015
+Speed Racer,6.0,135,2008,Action Adventure Comedy,43945766
+Star Wars: The Clone Wars,5.9,98,2008,Animation Action Adventure,35161554
+The Lone Ranger,6.4,150,2013,Action Adventure Western,89302115
+Moonraker,6.2,126,1979,Action Adventure Sci-Fi,70308099
+The Ridiculous 6,4.8,119,2015,Action Adventure Comedy,2335896
+How to Train Your Dragon 2,7.8,102,2014,Animation Action Adventure,177002924
+I Am Number Four,6.1,111,2011,Action Adventure Sci-Fi,55100437
+The League of Extraordinary Gentlemen,5.8,110,2003,Action Adventure Fantasy,66465204
+Terminator Salvation,6.5,115,2009,Action Adventure Sci-Fi,125322469
+TRON,6.7,96,1982,Action Adventure Sci-Fi,33000000
+Space Jam,6.5,88,1996,Animation Adventure Comedy,90463534
+Beowulf,6.3,115,2007,Animation Action Adventure,82161969
+Mary Poppins Returns,6.7,130,2018,Adventure Comedy Family,171958438
+200 M.P.H.,2.1,92,2011,Action Adventure Drama,171958438
+The Call of the Wild,6.7,100,2020,Adventure Drama Family,62342368
+The Cat in the Hat,4.0,82,2003,Adventure Comedy Family,101149285
+Shrek the Third,6.1,93,2007,Animation Adventure Comedy,320706665
+The Holy Mountain,7.8,114,1973,Adventure Drama Fantasy,61001
+The Ten Commandments,7.9,220,1956,Adventure Drama Family,93740000
+Alice Through the Looking Glass,6.1,113,2016,Adventure Family Fantasy,77042381
+Batman v Superman: Dawn of Justice Ultimate Edition,7.2,182,2016,Action Adventure Sci-Fi,77042381
+Space Cowboys,6.5,130,2000,Action Adventure Thriller,90464773
+Return to Oz,6.7,113,1985,Adventure Family Fantasy,72688614
+A Series of Unfortunate Events,6.8,108,2004,Adventure Comedy Family,118627117
+Spy Kids 3: Game Over,4.3,84,2003,Action Adventure Comedy,111761982
+Christopher Robin,7.2,104,2018,Adventure Comedy Drama,99215042
+The Iron Giant,8.1,86,1999,Animation Action Adventure,23159305
+Prince of Persia: The Sands of Time,6.6,116,2010,Action Adventure Fantasy,90759676
+The Imaginarium of Doctor Parnassus,6.8,123,2009,Adventure Comedy Fantasy,7689607

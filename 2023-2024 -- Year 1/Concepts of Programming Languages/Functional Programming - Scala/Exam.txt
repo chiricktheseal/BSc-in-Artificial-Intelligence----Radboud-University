@@ -1,0 +1,112 @@
+//-------------------------EXAM 2023
+//-------------------------ex2
+//MINE
+val list1 = List(1,2,3,4,5,6)
+val list2 = List[Int]()
+
+def oddNumbs(numbList:List[Int]): List[Int] = numbList match{
+  case Nil => Nil
+  case x::xs =>
+    numbList.map{x =>
+      if (x % 2 != 0){
+        x*x
+      }
+      else x
+    }
+}
+
+println(oddNumbs(list1))
+println(oddNumbs(list2))
+
+/-----------CHATGPT
+val list1 = List(1, 2, 3, 4, 5, 6)
+val list2 = List[Int]()
+
+def oddNumbs(numbList: List[Int]): List[Int] = {
+  numbList.map { x =>
+    if (x % 2 != 0) {
+      x * x
+    } else {
+      x
+    }
+  }
+}
+
+println(oddNumbs(list1)) // Output: List(1, 2, 9, 4, 25, 6)
+println(oddNumbs(list2)) // Output: List()
+
+
+
+
+//-------------------------EX3
+//A 
+type Date = (Int, Int, Int)
+enum Gender:
+  case Male, Female
+enum AccKind:
+  case Normal, Savings, Mortgage, Loan
+
+case class Person(bsn:String, name:String, address:String, gender:Gender, date:Date)
+case class Bank(name:String, address:String, bankAccList:List[BankAcc])
+case class BankAcc(id:String, owner:List[String], accKind:AccKind, amount:Double)
+
+//B
+def convertMap(listPerson:List[Person]):Map[String, Person] = {
+  listPerson.map{person => 
+    (person.bsn -> person)
+  }.toMap
+}
+
+//Check B
+val persons = List(
+  Person("123456789", "Alice", "123 Main St", Gender.Female, (1, 1, 1990)),
+  Person("987654321", "Bob", "456 Elm St", Gender.Male, (2, 2, 1985))
+)
+val persBsn = convertMap(persons)
+println(persBsn)
+
+
+def celebrate(bank:Bank, dateToday:Date, persBsn:Map[String, Person]):List[String] ={
+  bank.bankAccList.flatMap { account =>
+    account.owner.filter { bsn =>
+      persBsn.get(bsn) match {
+        case Some(person) =>
+          if (person.date == dateToday)  true
+          else false
+        case _ => false
+      }
+    }
+  }.distinct
+}
+
+//Check C
+val bank = Bank("Example Bank", "789 Bank St", List(
+  BankAcc("acc1", List("123456789"), AccKind.Normal, 1000.0),
+  BankAcc("acc2", List("987654321"), AccKind.Savings, 2000.0)
+))
+val dateToday = (1, 1, 1990)
+val bsnList = celebrate(bank, dateToday, persBsn)
+println(bsnList) // Output: List("123456789")
+
+ 
+def warning(bank:Bank):List[String] ={ //return bank id if warning true
+  bank.bankAccList.filter { account =>
+    account.accKind match {
+        case AccKind.Savings | AccKind.Normal =>
+          if (account.amount < 0)  true
+          else false
+        case AccKind.Mortgage | AccKind.Loan =>
+          if (account.amount > 0)  true
+          else false 
+    }
+  }map(_.id) 
+}
+// Check C
+val bankWithWarnings = Bank("Example Bank", "789 Bank St", List(
+  BankAcc("acc1", List("123456789"), AccKind.Normal, -500.0),
+  BankAcc("acc2", List("987654321"), AccKind.Savings, 2000.0),
+  BankAcc("acc3", List("111222333"), AccKind.Mortgage, 5000.0),
+  BankAcc("acc4", List("444555666"), AccKind.Loan, -1000.0)
+))
+val warningAccounts = warning(bankWithWarnings)
+println(warningAccounts) // Output: List("acc1", "acc3")

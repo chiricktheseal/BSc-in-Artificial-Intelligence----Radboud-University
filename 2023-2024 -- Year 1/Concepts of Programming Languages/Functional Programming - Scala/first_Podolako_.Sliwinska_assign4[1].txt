@@ -1,0 +1,44 @@
+import scala.io.Source
+import scala.collection.mutable.Map
+
+object readWords {
+  def main(args: Array[String]) = {
+    val myWords = readFile(args(0))
+    println(myWords)
+
+    val filteredWords = filterList(myWords)
+    println(filteredWords)
+
+    val wordFrequencies = countWordFrequencies(filteredWords)
+    println(wordFrequencies)
+  }
+
+
+  def readFile(fname: String): List[String] = {
+    val bufferedSource = io.Source.fromFile(fname)
+    val my_words = readLines(bufferedSource.getLines)
+    bufferedSource.close()
+    my_words
+  }
+  def readLines(lines: Iterator[String]): List[String] = {
+    if (!lines.hasNext) Nil
+    else {
+      val line = lines.next
+      val words = line.split(' ').toList.filter(x => x.length != 0)
+      words ++ readLines(lines)
+    }
+  }
+
+  def filterList(words: List[String]): List[String] = {
+    val punctuation = "[,.!?;:\"']"
+    words.map(word => word.replaceAll(punctuation, "").toLowerCase)
+  }
+  def countWordFrequencies(words: List[String]): Map[String, Int] = {
+    val wordCount = Map[String, Int]()
+    words.foreach { word =>
+      wordCount(word) = wordCount.getOrElse(word, 0) + 1
+    }
+    wordCount
+  }
+}
+

@@ -1,0 +1,11 @@
+val list2 = List(1,2,3,4,5,6)
+val list3 = List('a','b','f','c','d','e')
+
+def last[A](list:List[A]): Option[A] = {
+  if (list.length >= 0 ){
+    Some(list.last)
+  }
+  else None
+}
+println(last(list2)) //6
+println(last(list3)) //е

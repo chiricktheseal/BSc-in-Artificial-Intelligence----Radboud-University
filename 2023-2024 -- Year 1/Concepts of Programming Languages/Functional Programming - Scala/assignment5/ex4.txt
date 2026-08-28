@@ -1,0 +1,52 @@
+val list_example = List(1,2,3)
+val f = (t: Int) => t * 2
+
+def reverse[A](list: List[A]): List[A] = list match {
+  case Nil => Nil
+  case a :: as => reverse(as) ++ List(a)
+}
+
+def map[A,B](f:A => B)(xs:List[A]): List[B] = xs match {
+  case Nil => Nil
+  case a :: as => f(a) :: map(f)(as)
+}
+
+val rev_xs = reverse(list_example) //1,2,3 becomes to 3,2,1
+val map_rev_xs = map(f)(rev_xs) //3,2,1 becomes to 6,4,2
+val map_xs = map(f)(list_example) //1,2,3 becomes to 2,4,6
+val rev_map_xs = reverse(map_xs) // 2,4,6 becomes to 6,4,2
+
+println(rev_xs)
+println(map_rev_xs)
+println(map_xs)
+println(rev_map_xs)
+
+//Prove that
+//map(f)(reverse(xs)) = reverse(map(f)(xs)) for any list xs and function f.
+//∀f.∀xs:List[A].map(f)(reverse(xs)) = reverse(map(f)(xs))
+
+
+// Base case: (for empty lists)
+// map(f)(reverse(Nil)) = map(f)(Nil) = Nil
+// reverse(map(f)(Nil)) = reverse(Nil) = Nil
+
+// both are equivalent
+// map(f)(reverse(Nil)) = reverse(map(f)(Nil))
+// Nil = Nil
+
+
+// Induction case:
+// IH:
+// map(f)(reverse(xs)) = reverse(map(f)(xs))   
+
+//Lest side: map(f)(reverse(xs))
+// map(f)(reverse(x::xs)) //{Def. reverse}
+// map(f)(reverse(xs) ++ List(x)) //{Def. reverse}
+// map(f)(reverse(xs)) ++ map(f)(List(x)) //{Def. map}
+// reverse(map(f)(xs))++map(f)(List(x) //{IH}
+
+
+//Right side: reverse(map(f)(xs))
+// reverse(map(f)(x::xs)) //{Def. map}
+// reverse(f(x)::map(f)(xs)) //{Def. map}
+// reverse(map(f)(xs)) ++ List(f(x))//{Def. reverse}

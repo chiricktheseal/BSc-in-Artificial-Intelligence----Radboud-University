@@ -1,0 +1,84 @@
+MODULE main
+VAR
+  flag : array 0..1 of 0..4; --for processes 1 and 2 are flags 0 to 4
+  proc0 : process Process(0, flag[0], flag[1], flag[2]); --id, itsflas, otherflag
+  proc1 : process Process(1,  flag[1], flag[0], flag[2]);
+  proc2 : process Process(2, flag[2], flag[0], flag[1]);
+ASSIGN
+  init(flag[0]) := 0;
+  init(flag[1]) := 0;
+  init(flag[2]) := 0;
+
+-- ex 2  mutual exclusion
+LTLSPEC 
+  G !((proc0.state = l10 & proc1.state = l10) | 
+      (proc0.state = l10 & proc2.state = l10) |
+      (proc1.state = l10 & proc2.state = l10))
+
+-- ex 2  each process that wants to enter its critical section will eventually succeed in doing so.
+LTLSPEC 
+  G (proc0.state = l2 -> F proc0.state = l10)
+LTLSPEC 
+  G (proc1.state = l2 -> F proc1.state = l10)
+LTLSPEC 
+  G (proc2.state = l2 -> F proc2.state = l10)
+
+MODULE Process(id, my_flag, left_flag, right_flag)
+VAR
+  state : {l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12};
+  reading_index : 0..2;
+ASSIGN
+  init(state) := l0;
+  init(reading_index) := 0; --addded
+
+  next(state) :=
+    case
+      state = l0 : l1;
+      state = l1 : l2;
+      state = l2 : l3;
+      
+      state = l3 & reading_index = 0 & (my_flag < 3) : l3 & reading_index = 1;
+      state = l3 & reading_index = 1 & (left_flag < 3) : l3 & reading_index = 2;
+      state = l3 & reading_index = 2 & (right_flag < 3) : l4;
+      state = l3 : l3;
+      
+      state = l4 : l5;
+      state = l5 & ((left_flag = 1) | (right_flag = 1)) : l6;
+      state = l5 & !((left_flag = 1) | (right_flag = 1)) : l8;
+      state = l6 : l7;
+      
+      state = l7 & reading_index = 0 & (left_flag = 4) : l8;
+      state = l7 & reading_index = 0 & !(left_flag = 4) : l7 & reading_index = 1;
+      state = l7 & reading_index = 1 & (right_flag = 4) : l8;
+      state = l7 & reading_index = 1 & !(right_flag = 4) : l7 & reading_index = 2;
+      state = l7 & reading_index = 2 & (my_flag = 4) : l8;
+      state = l7 & reading_index = 2 & !(my_flag = 4) : l7 & reading_index = 0;
+      state = l7 : l7;
+      
+      state = l8 : l9;
+      state = l9 & (id = 0 ? TRUE : 
+                    id = 1 ? (left_flag < 2) :
+                    (left_flag < 2)) : l10;
+      state = l9 : l9;
+      
+      state = l10 : l11;
+      state = l11 & (id = 0 ? (right_flag < 2 | right_flag > 3) :
+                     id = 1 ? (right_flag < 2 | right_flag > 3) :
+                     TRUE) : l12;
+      state = l11 : l11;
+      
+      state = l12 : l0;
+      TRUE : state;
+    esac;
+    
+  next(my_flag) :=
+    case
+      state = l2 : 1;
+      state = l4 : 3;
+      state = l6 : 2;
+      state = l8 : 4;
+      state = l12 : 0;
+      TRUE : my_flag;
+    esac;
+
+FAIRNESS running

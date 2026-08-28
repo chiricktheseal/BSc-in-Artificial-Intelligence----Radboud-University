@@ -1,0 +1,15 @@
+def isAnagram (s: String, t: String): Boolean = {
+  val lettersS: List[String] = s.split("").toList
+  val lettersT: List[String] = t.split("").toList
+  
+  if (lettersS.length == lettersT.length){
+    if (lettersS.forall(x => lettersT.contains(x))) true 
+    else false
+  }
+  else false
+}
+
+println(isAnagram("team", "meta")) //true
+println(isAnagram("team", "mesa")) //false
+println(isAnagram("xyvg", "ygxv")) //true
+println(isAnagram("abcd", "abcf")) //false

@@ -1,0 +1,33 @@
+
+val list_example = List(1,2,3)
+////EXERCISE 2
+def reverse[A](list: List[A]): List[A] = list match {
+  case Nil => Nil
+  case head :: tail => reverse(tail) ++ List(He)
+}
+
+println("Using reverse with list will return list in reverse order")
+println(reverse(list_example)) // 1,2,3 becomes to 3,2,1
+
+println("Using reverse with itself will return list in original order")
+println(reverse(reverse(list_example))) // 1,2,3 becomes to 3,2,1; then 3,2,1 becomes to 1,2,3
+
+//Want to proof: ∀xs,ys in List[A]. reverse (xs ++ ys) = reverse(ys) ++ reverse(xs)
+
+//Proof for the base case, for all ys: List[A]
+//reverse (Nil ++ ys) = {Def. ++}
+//reverse (ys) = {Prop. ++}
+//reverse (ys) ++ Nil = {Def. reverse}
+//reverse (ys) ++ reverse(Nil)
+
+//Proof for the induction case. Assume for a certain xs: List[A] that
+//∀ys : List[A]. reverse (xs ++ ys) = reverse(ys) ++ reverse(xs)
+//(IH: Induction hypothesis)
+//For an arbitrary x:A
+//reverse ((x::xs) ++ ys) = {Def. ++}
+//reverse (x::(xs ++ ys) = {Def. reverse}
+//reverse (xs ++ ys) ++ List(x) = {IH: Induction hypothesis}
+//(reverse (ys) ++ reverse (xs)) ++ List(x) = {associativity ++}
+//reverse (ys) ++ (reverse (xs) ++ List(x)) = {Def. reverse}
+//reverse (ys) ++ reverse (x::xs)
+

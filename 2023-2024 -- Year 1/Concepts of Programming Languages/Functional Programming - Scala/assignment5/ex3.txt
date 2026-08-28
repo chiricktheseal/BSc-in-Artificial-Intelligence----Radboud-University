@@ -1,0 +1,55 @@
+val list_example = List(1,2,3)
+val list_example2 = List(4,5,6)
+val f = (t: Int) => t * 2
+
+def ++[A](l1: List[A], l2: List[A]): List[A] = l1 match {
+  case Nil => l2
+  case a :: as => a :: (as ++ l2)
+}
+
+def map[A,B](f:A => B)(xs:List[A]): List[B] = xs match {
+  case Nil => Nil
+  case a :: as => f(a) :: map(f)(as)
+}
+
+val f_on_xs = (map(f)(list_example)) // 1,2,3 becomes to 2,4,6
+val f_on_ys = (map(f)(list_example2)) // 4,5,6 becomes to 8,10,12 
+val f_on_xs_plus_f_on_ys = f_on_xs ++ f_on_ys // 1,2,3 becomes to 2,4,6 ++ 4,5,6 becomes to 8,10,12
+val f_on_xs_plus_ys = (map(f)(list_example ++ list_example2)) // 1,2,3 ++ 4,5,6 becomes to 1,2,3,4,5,6 becomes to 2,4,6,8,10,12
+
+println(f_on_xs)
+println(f_on_ys)
+println(f_on_xs_plus_f_on_ys)
+println(f_on_xs_plus_ys)
+
+//Prove that
+//∀A.∀xs,ys:List[A].map(f)(xs) ++ map(f)(ys) = map(f)(xs++ys)
+// map(f)(xs) = {Def. map}
+// map(f)(ys) = {Def. map}
+// map(f)(xs) ++ map(f)(ys) = {Def. ++}
+// map(f)(xs ++ ys) = {Def. ++}
+
+
+// Base case: (for empty lists)
+// map(f)(Nil) ++ map(f)(Nil) = Nil ++ Nil = Nil
+// map(f)(Nil ++ Nil) = map(f)(Nil) = Nil
+
+// both are equivalent
+// map(f)(Nil) ++ map(f)(Nil) = map(f)(Nil ++ Nil) 
+// Nil = Nil
+
+
+// Induction case:
+// IH:
+// map(f)(xs) ++ map(f)(ys) = map(f)(xs ++ ys)     
+
+//Lest side: (map(f)(xs) ++ map(f)(ys))
+// map(f)(x::xs) ++ map(f)(ys)
+// map(f)(x::xs) = f(x)::map(f)(xs) //{Def. map}
+// (f(x)::map(f)(xs)) ++ map(f)(ys) //{Def. ++}
+// (f(x)::map(f)(xs ++ ys)) //{IH}
+
+//Right side: ( map(f)(xs ++ ys))
+// map(f)((x::xs) ++ ys)
+// map(f)( x::(xs ++ ys)) //{Def. ++}
+// f(x)::map(f)(xs ++ ys) //{Def. map}

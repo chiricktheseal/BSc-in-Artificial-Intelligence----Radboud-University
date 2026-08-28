@@ -1,0 +1,655 @@
+MODULE main
+VAR
+  load : process load_unit(transport);
+  glue : process glue_unit(attach,transport);
+  attach : process attach_unit();
+  transport : process transport_unit(load,glue,attach);
+  ctrl : process controller(load,glue,attach,transport);
+
+LTLSPEC
+G ( ( load.state      != Error
+     & load.state      != Empty
+     & load.state      != Deliver
+     & load.state      != Processing
+	 & load.state      != unable_to_handle_ctrl_command
+	 & glue.state      != Preprocessing
+     & glue.state      != Processing
+	 & glue.state      != unable_to_handle_ctrl_command
+	 & attach.state    != Preprocessing
+     & attach.state    != Processing
+	 & attach.state    != unable_to_handle_ctrl_command
+     & transport.state != Deliver
+     & transport.state != Postprocessing
+	 & transport.state      != unable_to_handle_ctrl_command
+     )
+   -> ( load.command      != ctrl_commands_incomplete
+      | attach.command    != ctrl_commands_incomplete
+      | glue.command      != ctrl_commands_incomplete
+      | transport.command != ctrl_commands_incomplete
+      )
+   )
+
+LTLSPEC
+G ( ( load.command      != ctrl_commands_incomplete
+     & attach.command    != ctrl_commands_incomplete
+     & glue.command      != ctrl_commands_incomplete
+     & transport.command != ctrl_commands_incomplete
+	 & load.state        != Empty
+	 & load.state        != Error
+	 & glue.state        != Error
+	 & attach.state      != Error
+	 & transport.state   != Error
+     )
+   -> ( load.state      != unable_to_handle_ctrl_command
+      & attach.state    != unable_to_handle_ctrl_command
+      & glue.state      != unable_to_handle_ctrl_command
+      & transport.state != unable_to_handle_ctrl_command
+    )
+   )
+FAIRNESS running
+
+MODULE load_unit(transport)
+VAR
+  state : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, unable_to_handle_ctrl_command};
+  command : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, ctrl_commands_incomplete};
+  stack_empty : boolean;
+ASSIGN
+  init(state) := Processed;
+  init(command) := Busy;
+  init(stack_empty) := FALSE;
+  next(state) :=
+  case
+      state = Idle & command = Reset : Processed;
+	  state = Processed & command = Deliver & transport.state = Processed & !stack_empty: Deliver;
+	  state = Processed & command = Deliver & transport.state = Processed & stack_empty: Empty;
+	  state = Processed & command = Deliver & transport.state != Processed : state;
+	  state = Processed & command = Empty : Empty;
+	  state = Processed & command = Accept : {Processed, Error, Empty};
+      state = Error & command = Reset : Processed;
+	  state = Deliver & command = Busy : Processing;
+	  state = Processing & command = Busy : Processed;
+	  --state = Empty & command = Busy : Processed;
+	  --exclude all counterexamples about unable_to_handle_ctrl_command in which the unit is in a state in which there is an outgoing automatic transition (no command is needed)
+	  state != Empty & state != Error & state != Deliver & state != Processing & command != Busy : unable_to_handle_ctrl_command;
+	  TRUE : state;
+  esac;
+  next(command) :=
+  case
+      command = ctrl_commands_incomplete : ctrl_commands_incomplete;
+	  state = Processed & command = Deliver & transport.state != Processed : command;
+	  --commands are not buffered (see mail from Jorg 7jun2012), so if it wasn't able to execute a recieved command in this state, the command will be forgotten:
+	  TRUE : Busy;
+  esac;
+
+  next(transport.leadframe_to_glue_unit) :=
+  case
+      state = Processed & command = Deliver & transport.state = Processed & !stack_empty: TRUE;
+	  TRUE : transport.leadframe_to_glue_unit;
+  esac;
+
+  next(stack_empty) :=
+  case
+      !stack_empty : {TRUE, FALSE};
+	  TRUE : TRUE;
+  esac;
+
+MODULE glue_unit(attach,transport)
+VAR
+  state : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, unable_to_handle_ctrl_command};
+  command : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, ctrl_commands_incomplete};
+  has_leadframe : boolean;
+ASSIGN
+  init(state) := Idle;
+  init(command) := Busy;
+  init(has_leadframe) := FALSE;
+  next(state) :=
+  case
+      state = Idle & command = Accept : Accept;
+      state = Accept & attach.state != Accept & command = Preprocessing & has_leadframe : Preprocessing;
+	  state = Accept & attach.state != Accept & command = Preprocessing & !has_leadframe : Idle;
+	  state = Accept & attach.state = Accept & command = Preprocessing : state; --wait for the attach unit
+	  state = Preprocessing & command = Busy : Processing;
+	  state = Processing & command = Busy : Processed;
+	  state = Processed & command = Deliver : Deliver;
+	  state = Deliver & command = Accept : Accept;
+	  state = Deliver & command = Idle : Idle;
+	  state = Idle & command = Idle : Idle;
+	  state = Error & command = Reset : Idle;
+	  --exclude all counterexamples about unable_to_handle_ctrl_command in which the unit is in a state in which there is an outgoing automatic transition (no command is needed)
+	  state != Preprocessing & state != Processing & command != Busy : unable_to_handle_ctrl_command;
+	  TRUE : state;
+  esac;
+  next(command) :=
+  case
+      command = ctrl_commands_incomplete : ctrl_commands_incomplete;
+	  state = Accept & attach.state = Accept & command = Preprocessing : command;
+	  --commands are not buffered (see mail from Jorg 7jun2012), so if it wasn't able to execute a recieved command in this state, the command will be forgotten:
+	  TRUE : Busy;
+  esac;
+
+  next(has_leadframe) :=
+  case
+      state = Deliver & command = Accept : FALSE;
+	  state = Deliver & command = Idle : FALSE;
+	  TRUE : has_leadframe;
+  esac;
+
+  next(transport.leadframe_to_attach_unit) :=
+  case
+      state = Deliver & command = Accept : has_leadframe;
+	  state = Deliver & command = Idle : has_leadframe;
+	  TRUE : transport.leadframe_to_attach_unit;
+  esac;
+
+
+
+MODULE attach_unit()
+VAR
+  state : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, unable_to_handle_ctrl_command};
+  command : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, ctrl_commands_incomplete};
+  has_leadframe : boolean;
+ASSIGN
+  init(state) := Idle;
+  init(command) := Busy;
+  init(has_leadframe) := FALSE;
+  next(state) :=
+  case
+      state = Idle & command = Accept : Accept;
+      state = Accept & command = Preprocessing & has_leadframe: Preprocessing;
+	  state = Accept & command = Preprocessing & !has_leadframe: Idle;
+	  state = Preprocessing & command = Busy : Processing;
+	  state = Processing & command = Busy : {Processing, Processed};
+	  state = Processed & command = Deliver : Deliver;
+	  state = Deliver & command = Accept : Accept;
+	  state = Deliver & command = Idle : Idle;
+	  state = Idle & command = Idle : Idle;
+	  state = Error & command = Reset : Idle;
+	  --exclude all counterexamples about unable_to_handle_ctrl_command in which the unit is in a state in which there is an outgoing automatic transition (no command is needed)
+	  state != Preprocessing & state != Processing & command != Busy : unable_to_handle_ctrl_command;
+	  TRUE : state;
+  esac;
+  next(command) :=
+  case
+      command = ctrl_commands_incomplete : ctrl_commands_incomplete;
+	  --commands are not buffered (see mail from Jorg 7jun2012), so if it wasn't able to execute a recieved command in this state, the command will be forgotten:
+	  TRUE : Busy;
+  esac;
+
+  next(has_leadframe) :=
+  case
+      state = Deliver & command = Accept : FALSE;
+	  state = Deliver & command = Idle : FALSE;
+	  TRUE : has_leadframe;
+  esac;
+
+MODULE transport_unit(load,glue,attach)
+VAR
+  state : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, unable_to_handle_ctrl_command};
+  command : {Empty, Accept, Processing, Processed, Deliver, Error, Idle, Reset, Preprocessing, Postprocessing, Busy, ctrl_commands_incomplete};
+  leadframe_to_glue_unit : boolean;
+  leadframe_to_attach_unit : boolean;
+ASSIGN
+  init(state) := Idle;
+  init(command) := Busy;
+  init(leadframe_to_glue_unit) := FALSE;
+  next(state) :=
+  case
+      state = Idle & command = Accept : Accept; --{Accept, Preprocessing};
+      state = Accept & command = Processing : Processed;
+	  state = Preprocessing & command = Processing : Processed;
+	  state = Processed & command = Deliver : Deliver;
+	  state = Deliver & command = Busy : Postprocessing;
+	  state = Postprocessing & command = Busy : Idle;
+	  state = Error & command = Reset : Idle;
+	  --exclude all counterexamples about unable_to_handle_ctrl_command in which the unit is in a state in which there is an outgoing automatic transition (no command is needed)
+	  state != Deliver & command != Busy : unable_to_handle_ctrl_command;
+	  TRUE : state;
+  esac;
+  next(command) :=
+  case
+      command = ctrl_commands_incomplete : ctrl_commands_incomplete;
+	  --commands are not buffered (see mail from Jorg 7jun2012), so if it wasn't able to execute a recieved command in this state, the command will be forgotten:
+	  TRUE : Busy;
+  esac;
+
+  next (glue.command) :=
+  case
+      state = Deliver & command = Busy & leadframe_to_glue_unit & glue.state = Accept: Preprocessing;
+	  TRUE : glue.command;
+  esac;
+
+  next (attach.command) :=
+  case
+      state = Deliver & command = Busy & leadframe_to_attach_unit & attach.state = Accept: Preprocessing;
+	  TRUE : attach.command;
+  esac;
+
+  next(leadframe_to_glue_unit) :=
+  case
+      state = Deliver & command = Busy : FALSE;
+	  TRUE : leadframe_to_glue_unit;
+  esac;
+
+  next(glue.has_leadframe) :=
+  case
+      state = Deliver & command = Busy : leadframe_to_glue_unit;
+	  TRUE : glue.has_leadframe;
+  esac;
+
+  next(leadframe_to_attach_unit) :=
+  case
+      state = Deliver & command = Busy : FALSE;
+	  TRUE : leadframe_to_attach_unit;
+  esac;
+
+  next(attach.has_leadframe) :=
+  case
+      state = Deliver & command = Busy : leadframe_to_attach_unit;
+	  TRUE : attach.has_leadframe;
+  esac;
+
+
+MODULE controller(load,glue,attach,transport)
+-- Define a short name for a common expression.
+DEFINE allCommandsBusy := load.command = Busy & glue.command = Busy & attach.command = Busy & transport.command = Busy;
+ASSIGN
+-- op basis van de ada code:
+	next(load.command) :=
+	case
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processing & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Idle & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Busy & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing : Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Postprocessing : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed : Busy;
+		--removed dbxs lines
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Accept & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Processed & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle : Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept : Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed : Processing;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Postprocessing : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Deliver : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Idle & transport.state =  Processed : Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed : Busy;
+		allCommandsBusy : ctrl_commands_incomplete;
+		TRUE : load.command;
+    esac;
+
+	next(glue.command) :=
+	case
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processing & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Idle & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Busy & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		--removed dbxs lines
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy : ctrl_commands_incomplete;
+		TRUE : glue.command;
+    esac;
+
+	next(attach.command) :=
+	case
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Busy & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Postprocessing :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		--removed dbxs lines
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Idle;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Accept & transport.state =  Idle :  Preprocessing;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Idle;
+		allCommandsBusy & load.state = Deliver & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Deliver :  Preprocessing;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Idle;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Idle & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Busy;
+		allCommandsBusy : ctrl_commands_incomplete;
+		TRUE : attach.command;
+    esac;
+
+	next(transport.command) :=
+	case
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Busy & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Idle & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Processing & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processing & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		--removed dbxs lines
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Accept & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Deliver & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Idle & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Accept & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processing & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Processed & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Deliver & glue.state =  Accept & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Processed & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Deliver & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Preprocessing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Postprocessing :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Accept & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Deliver & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Accept & transport.state =  Deliver :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Processed & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Idle :  Accept;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Accept :  Processing;
+		allCommandsBusy & load.state = Empty & glue.state =  Deliver & attach.state =  Accept & transport.state =  Processed :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Idle & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processed & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Deliver & transport.state =  Idle :  Busy;
+		allCommandsBusy & load.state = Empty & glue.state =  Idle & attach.state =  Idle & transport.state =  Processed :  Deliver;
+		allCommandsBusy & load.state = Empty & glue.state =  Accept & attach.state =  Processing & transport.state =  Processed :  Deliver;
+		allCommandsBusy : ctrl_commands_incomplete;
+		TRUE : transport.command;
+    esac;

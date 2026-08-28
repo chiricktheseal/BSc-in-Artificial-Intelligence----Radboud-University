@@ -1,0 +1,48 @@
+//а
+enum AnimalType:
+  case Cat, Dog, Chicken, Horse, Cow, Pig
+
+enum Gender:
+  case Male, Female
+
+case class Owner(name: String, address: String, animals: List[Animal])
+case class Animal(name: String, animalType: AnimalType, gender: Gender)
+case class Vet(name: String, address: String, customers: List[Owner])
+
+//b
+def vetsPets(vets: List[Vet]): List[Vet] = {
+  vets.filter { vet =>
+    vet.customers.flatMap(_.animals).forall(animal => 
+      animal.animalType == AnimalType.Cat || animal.animalType == AnimalType.Dog
+    )
+  }
+}
+
+//c
+
+def vetLargeLivestock(vets: List[Vet]): Option[Vet] = {
+  vets.maxByOption { vet =>
+    vet.customers.flatMap(_.animals).count { animal =>
+      animal.animalType match {
+        case AnimalType.Chicken | AnimalType.Horse | AnimalType.Cow | AnimalType.Pig => true
+        case _ => false
+      }
+    }
+  }
+}
+
+//ex
+
+val owners = List(
+  Owner("Angelina Podolako", "123 Nijmegen", List(Animal("Bestie", AnimalType.Horse, Gender.Female))),
+  Owner("Magdalena Sliwinskah", "456 Arnhem", List(Animal("Fluffy", AnimalType.Cat, Gender.Male), Animal("Muhtar", AnimalType.Dog, Gender.Male)))
+)
+
+val vets = List(
+  Vet("Dr. Red", "789 Dog Street", owners),
+  Vet("Dr. Blue", "101 Cat Street", List(Owner("Who Is", "228 Scala Street", List(Animal("Maddy", AnimalType.Cat, Gender.Female))))),
+  Vet("Dr. Green", "228 Drink Street", List(Owner("My Name", "330 Java Street", List(Animal("One", AnimalType.Pig, Gender.Male), Animal("Two", AnimalType.Cow, Gender.Male)))))
+)
+
+println(vetsPets(vets))
+println(vetLargeLivestock(vets))

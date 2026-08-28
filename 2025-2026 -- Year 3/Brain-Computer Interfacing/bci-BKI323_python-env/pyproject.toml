@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "bci-bki323"
+version = "0.1.0"
+description = "Necessary dependancies for the assignments of the Bachelor level BCI course (BKI323)."
+authors = ["Pierre Guetschel <pierre.guetschel@donders.ru.nl>"]
+readme = "README.md"
+packages = [{include = "bci_bki323"}]
+
+[tool.poetry.dependencies]
+python = "^3.10,<3.13"
+mne = "^1.8.0"
+torch = "^2.4.0"
+moabb = "^1.1.0"
+numpy = "^1.26"
+pandas = "^1.5.2"
+scipy = "^1.14.1"
+matplotlib = "^3.9.2"
+seaborn = {version = "^0.12.1", extras = ["stats"]}
+pyyaml = "^6.0.2"
+scikit-learn = "^1.5.1"
+notebook = "^7.2.1"
+ipywidgets = "8.1.3"
+skorch = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

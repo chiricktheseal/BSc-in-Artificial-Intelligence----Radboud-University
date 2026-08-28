@@ -1,0 +1,9 @@
+MODULE main
+VAR
+    waiting : 0..15;
+INIT
+    waiting = 0
+TRANS
+    next(waiting) = waiting + 1
+LTLSPEC G (waiting != 10)
+INVARSPEC waiting != 10

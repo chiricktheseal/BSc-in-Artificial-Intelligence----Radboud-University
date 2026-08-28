@@ -1,0 +1,15 @@
+val list1 = List(1,2,3,4,5,6)
+val even: Int => Boolean = _ % 2 == 0
+
+def selectiveMap[A] (p: A => Boolean)(f: A => A)(as:List[A]): List[A] = {
+  as.map {x =>
+    if (p(x)){
+    f(x)
+    }
+    else {
+    x
+    } 
+  }
+}
+  
+println( selectiveMap[Int](even)(_ * 2)(list1) ) //Output: List(1, 4, 3, 8, 5, 12)

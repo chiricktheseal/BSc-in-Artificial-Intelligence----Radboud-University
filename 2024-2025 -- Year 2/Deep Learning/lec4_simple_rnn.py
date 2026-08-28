@@ -1,0 +1,10 @@
+from d2l import mxnet as d2l
+from mxnet import np, npx
+np.set_np()
+
+X, W_xh = np.random.normal(0, 1, (3, 1)), np.random.normal(0, 1, (1, 4))
+H, W_hh = np.random.normal(0, 1, (3, 4)), np.random.normal(0, 1, (4, 4))
+np.dot(X, W_xh) + np.dot(H, W_hh)
+
+#same operation as above
+np.dot(np.concatenate((X,H), 1), np.concatenate((W_xh, W_hh),0))

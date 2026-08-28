@@ -1,0 +1,2 @@
+Robotics project — CoppeliaSim & LEGO SPIKE
+Implemented autonomous robot behaviours using PID control and evaluated performance in simulation and on physical hardware.

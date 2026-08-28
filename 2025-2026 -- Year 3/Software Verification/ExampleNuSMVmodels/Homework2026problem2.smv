@@ -1,0 +1,11 @@
+MODULE main
+VAR
+  p : boolean;
+  q : boolean;
+  
+  
+LTLSPEC (G p -> F q) <-> (p U (q | !p)) 
+
+LTLSPEC (F p & X G p) <-> F p
+
+LTLSPEC (G (p -> q)) -> (F p -> F q)
